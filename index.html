@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0b3c5d">
+  <meta name="description" content="Bản đồ Việt Nam trực tuyến">
+  <title>Vietflex map</title>
+
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/Vietflexmap/VN@6144d565fcf236727577ab3c4471bbe49f86892f/dist/vietflex.css">
+  <script src="https://cdn.jsdelivr.net/gh/Vietflexmap/VN@6144d565fcf236727577ab3c4471bbe49f86892f/dist/vietflex.js"></script>
+
+  <style>
+    :root{
+      --panel:rgba(255,255,255,.96);--ink:#17324a;--muted:#627d98;--line:#d7e3ed;
+      --blue:#0a4c9f;--blue2:#1268c4;--bad:#b42318;--ok:#137a4b;
+      --shadow:0 10px 30px rgba(20,48,72,.16)
+    }
+    *{box-sizing:border-box}
+    html,body,#map{width:100%;height:100%;margin:0;overflow:hidden}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#dce7ef;color:var(--ink)}
+    #map{position:absolute;inset:0;background:#dce7ef}
+
+    .toolbar{position:absolute;z-index:1000;top:14px;right:14px;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:min(760px,calc(100vw - 28px))}
+    .tool-btn{width:42px;height:42px;border:1px solid rgba(197,213,226,.96);border-radius:12px;background:var(--panel);color:#34566f;box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;position:relative;transition:.18s ease;padding:0}
+    .tool-btn:hover{transform:translateY(-1px);border-color:#79aedd;color:var(--blue)}
+    .tool-btn.active{background:linear-gradient(135deg,#0a4c9f,#1677d2);border-color:transparent;color:#fff}
+    .tool-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+    .tool-btn[data-tip]::after{content:attr(data-tip);position:absolute;top:48px;right:0;padding:5px 7px;background:#142f44;color:#fff;font-size:10px;white-space:nowrap;border-radius:6px;opacity:0;pointer-events:none;transform:translateY(-3px);transition:.15s;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+    .tool-btn[data-tip]:hover::after{opacity:1;transform:none}
+
+    .search{position:absolute;z-index:1000;top:14px;left:14px;width:min(390px,calc(100vw - 470px));min-width:245px;height:44px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:12px;display:flex;align-items:center;padding:0 9px;gap:8px}
+    .search svg{width:18px;height:18px;stroke:#6b859a;fill:none;stroke-width:2;flex:0 0 auto}
+    .search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:13px}
+    .search-results{position:absolute;left:0;right:0;top:50px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);max-height:300px;overflow:auto;display:none}
+    .result{padding:9px 11px;border-bottom:1px solid #edf2f7;cursor:pointer;font-size:12px;line-height:1.35}.result:last-child{border-bottom:0}.result:hover{background:#f5f9fd}.result small{display:block;color:#7890a3;margin-top:2px}
+
+    .coords{position:absolute;z-index:900;left:14px;bottom:14px;background:rgba(255,255,255,.92);border:1px solid var(--line);box-shadow:0 5px 18px rgba(20,48,72,.1);border-radius:8px;padding:6px 9px;color:#567287;font-size:10.5px;pointer-events:none}
+    .toast{position:absolute;z-index:1200;right:14px;bottom:14px;background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:9px;padding:8px 10px;font-size:11px;color:#48677e;opacity:0;transform:translateY(7px);pointer-events:none;transition:.2s;max-width:min(360px,70vw)}
+    .toast.show{opacity:1;transform:none}.toast.bad{color:var(--bad)}.toast.ok{color:var(--ok)}
+
+    .leaflet-control-zoom{border:none!important;box-shadow:var(--shadow)!important}.leaflet-control-zoom a{border:1px solid var(--line)!important;color:#34566f!important}.leaflet-control-attribution{font-size:9px!important;background:rgba(255,255,255,.82)!important}
+    .leaflet-top.leaflet-right{top:58px;right:14px}
+
+    /* Tile visual modes for raster basemap variants. */
+    .mode-standard .leaflet-tile-pane img{filter:none}
+    .mode-light .leaflet-tile-pane img{filter:brightness(1.12) saturate(.72) contrast(.92)}
+    .mode-dark .leaflet-tile-pane img{filter:brightness(.58) saturate(.75) contrast(1.14) hue-rotate(8deg)}
+    .mode-devlight .leaflet-tile-pane img{filter:grayscale(.28) brightness(1.16) contrast(.88) saturate(.58)}
+    .mode-raster .leaflet-tile-pane img{filter:none}
+    .mode-satellite .leaflet-tile-pane img{filter:none}
+
+    @media(max-width:900px){
+      .search{top:68px;width:calc(100vw - 28px);min-width:0}.toolbar{left:14px;right:14px;justify-content:flex-end}.tool-btn{width:39px;height:39px}.coords{bottom:12px}.leaflet-top.leaflet-right{top:106px;right:14px}
+    }
+    @media(max-width:520px){.tool-btn{width:37px;height:37px;border-radius:10px}.toolbar{gap:5px}.search{top:62px;height:42px}.leaflet-top.leaflet-right{top:102px;right:10px}}
+  </style>
+</head>
+<body class="mode-standard">
+<div id="map" aria-label="Bản đồ Việt Nam"></div>
+
+<div class="toolbar" role="toolbar" aria-label="Kiểu bản đồ">
+  <button class="tool-btn active" data-mode="standard" data-tip="Standard" aria-label="Standard">
+    <svg viewBox="0 0 24 24"><path d="M3 6.5 8 4l8 3 5-2.5v13L16 20l-8-3-5 2.5z"/><path d="M8 4v13M16 7v13"/></svg>
+  </button>
+  <button class="tool-btn" data-mode="light" data-tip="Light" aria-label="Light">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+  <button class="tool-btn" data-mode="dark" data-tip="Dark" aria-label="Dark">
+    <svg viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5z"/></svg>
+  </button>
+  <button class="tool-btn" data-mode="raster" data-tip="Raster" aria-label="Raster">
+    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+  </button>
+  <button class="tool-btn" data-mode="satellite" data-tip="Satellite" aria-label="Satellite">
+    <svg viewBox="0 0 24 24"><path d="m9 9 6 6M7 12l-3 3 5 5 3-3M17 12l3-3-5-5-3 3"/><path d="M14 14c2 2 4 3 7 3M10 10C8 8 7 6 7 3"/></svg>
+  </button>
+  <button class="tool-btn" data-mode="devlight" data-tip="Dev Light" aria-label="Dev Light">
+    <svg viewBox="0 0 24 24"><path d="m8 9-3 3 3 3M16 9l3 3-3 3M14 5l-4 14"/></svg>
+  </button>
+  <button class="tool-btn" id="btnVN" data-tip="Việt Nam" aria-label="Việt Nam">
+    <svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2h5.5l-4.5 3.2 1.7 5.3-4.5-3.3-4.5 3.3 1.7-5.3-4.5-3.2h5.5z"/></svg>
+  </button>
+</div>
+
+<div class="search">
+  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+  <input id="searchInput" type="search" autocomplete="off" placeholder="Tìm địa điểm tại Việt Nam…">
+  <div id="searchResults" class="search-results"></div>
+</div>
+
+<div id="coords" class="coords">Lon: -- | Lat: --</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const DEFAULT_TILE = 'https://gomaps.vnpt.vn/tiles/mapvnpt/v1/{z}/{x}/{y}.png';
+  const DEFAULT_KEY = 'e278c7b3-b64f-4487-831a-1896ea41a270';
+  const VIETNAM_BOUNDS = [[7.0,101.5],[24.0,116.8]];
+
+  const $ = id => document.getElementById(id);
+  const toast = $('toast');
+  let toastTimer = null;
+
+  function notify(text, type=''){
+    clearTimeout(toastTimer);
+    toast.textContent = text;
+    toast.className = 'toast show ' + type;
+    toastTimer = setTimeout(() => toast.className = 'toast', 2600);
+  }
+
+  // Cấu hình nền VNPT GoMaps cố định trong mã nguồn.
+  const config = {tile: DEFAULT_TILE, key: DEFAULT_KEY};
+
+  if(!window.Vietflex){
+    notify('Không tải được thư viện Vietflex. Vui lòng kiểm tra kết nối Internet.','bad');
+    return;
+  }
+
+  const map = Vietflex.vietflexMap('map', {
+    center:[15.42,106.42],
+    zoom:5,
+    minZoom:3,
+    maxZoom:22,
+    zoomControl:false,
+    attributionControl:false,
+    googleMaps:false,
+    preferCanvas:true
+  });
+
+  new Vietflex.ZoomControl({position:'topright'}).addTo(map);
+  new Vietflex.AttributionControl({
+    position:'bottomright',
+    prefix:'<a href="https://github.com/Vietflexmap/VN" target="_blank" rel="noopener" title="Vietflex">Vietflex</a>'
+  }).addTo(map);
+
+  let standardLayer = null;
+  let vnptLayer = null;
+  let satelliteLayer = null;
+  let fallbackLayer = null;
+  let currentMode = 'standard';
+  let tileErrors = 0;
+  let fallbackUsed = false;
+
+  function vnptUrl(){
+    const sep = config.tile.includes('?') ? '&' : '?';
+    return config.tile + sep + 'apiKey=' + encodeURIComponent(config.key);
+  }
+
+  function makeVnptLayer(){
+    return new Vietflex.TileLayer(vnptUrl(), {
+      minZoom:0,maxZoom:20,maxNativeZoom:20,
+      attribution:'VNPT GoMaps',
+      className:'vnpt-tiles',
+      updateWhenIdle:false,keepBuffer:4
+    });
+  }
+
+  function makeFallback(){
+    return new Vietflex.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap contributors',
+      className:'fallback-tiles'
+    });
+  }
+
+  function makeSatellite(){
+    return Vietflex.legacyGoogleTiles({
+      mapType:'satellite',
+      maxZoom:22
+    });
+  }
+
+  function removeBaseLayers(){
+    [vnptLayer,satelliteLayer,fallbackLayer].forEach(layer => {
+      if(layer && map.hasLayer(layer)) map.removeLayer(layer);
+    });
+  }
+
+  function attachTileHealth(layer){
+    tileErrors = 0;
+    layer.on('tileload', () => { tileErrors = 0; });
+    layer.on('tileerror', () => {
+      tileErrors++;
+      if(tileErrors >= 6 && !fallbackUsed){
+        fallbackUsed = true;
+        removeBaseLayers();
+        fallbackLayer = makeFallback().addTo(map);
+        notify('Nguồn nền chính tạm thời không khả dụng. Đã chuyển sang nền dự phòng.');
+      }
+    });
+  }
+
+  function setMode(mode){
+    currentMode = mode;
+    fallbackUsed = false;
+    tileErrors = 0;
+    document.body.className = 'mode-' + mode;
+    document.querySelectorAll('[data-mode]').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+    removeBaseLayers();
+
+    if(mode === 'satellite'){
+      satelliteLayer = makeSatellite().addTo(map);
+      notify('Đã chuyển sang ảnh vệ tinh.','ok');
+      return;
+    }
+
+    // VNPT GoMaps là nền gốc cho Standard / Light / Dark / Raster / Dev Light.
+    // Light/Dark/Dev Light chỉ thay đổi CSS filter, không thay đổi nhà cung cấp dữ liệu.
+    vnptLayer = makeVnptLayer();
+    attachTileHealth(vnptLayer);
+    vnptLayer.addTo(map);
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+
+  $('btnVN').addEventListener('click', () => map.fitBounds(VIETNAM_BOUNDS, {padding:[35,35],maxZoom:6}));
+
+  map.on('pointermove', e => {
+    $('coords').textContent = `Lon: ${e.latlng.lng.toFixed(6)} | Lat: ${e.latlng.lat.toFixed(6)}`;
+  });
+
+  // Compact URL state: #zoom/lat/lon
+  let hashTimer = null;
+  map.on('moveend zoomend', () => {
+    clearTimeout(hashTimer);
+    hashTimer = setTimeout(() => {
+      const c = map.getCenter();
+      history.replaceState(null,'',`#${map.getZoom().toFixed(2)}/${c.lat.toFixed(5)}/${c.lng.toFixed(5)}`);
+    },120);
+  });
+
+  function restoreHash(){
+    const m = (location.hash || '').replace(/^#/,'').match(/^([0-9.]+)\/(-?[0-9.]+)\/(-?[0-9.]+)$/);
+    if(m) map.setView([Number(m[2]),Number(m[3])],Number(m[1]));
+  }
+
+  // Search via Nominatim; errors are silent and user-friendly.
+  const results = $('searchResults');
+  let searchAbort = null;
+  async function search(q){
+    q = q.trim();
+    if(!q){results.style.display='none';return;}
+    if(searchAbort) searchAbort.abort();
+    searchAbort = new AbortController();
+    try{
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=vn&q=' + encodeURIComponent(q);
+      const res = await fetch(url,{signal:searchAbort.signal});
+      if(!res.ok) throw new Error('search');
+      const data = await res.json();
+      results.innerHTML='';
+      if(!data.length){results.innerHTML='<div class="result">Không tìm thấy kết quả</div>';results.style.display='block';return;}
+      data.forEach(item => {
+        const el=document.createElement('div'); el.className='result';
+        const title=(item.display_name||'Địa điểm').split(',')[0];
+        const safe=document.createElement('span'); safe.textContent=title;
+        const sub=document.createElement('small'); sub.textContent=item.display_name||'';
+        el.append(safe,sub);
+        el.addEventListener('click',()=>{map.flyTo([Number(item.lat),Number(item.lon)],14,{duration:.8});results.style.display='none';$('searchInput').value=title;});
+        results.appendChild(el);
+      });
+      results.style.display='block';
+    }catch(err){ if(err.name!=='AbortError') notify('Tìm kiếm tạm thời không khả dụng.'); }
+  }
+  $('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') search(e.currentTarget.value); });
+  let searchTimer=null;
+  $('searchInput').addEventListener('input', e => { clearTimeout(searchTimer); searchTimer=setTimeout(()=>search(e.target.value),450); });
+  document.addEventListener('click', e => { if(!e.target.closest('.search')) results.style.display='none'; });
+
+  restoreHash();
+  setMode('standard');
+})();
+</script>
+</body>
+</html>
