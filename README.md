@@ -1,6 +1,6 @@
 # VNmap
 
-Bản đồ Việt Nam chạy trực tiếp trên GitHub Pages, sử dụng **Vietflex 1.0.0** làm lõi bản đồ thay cho việc gọi Leaflet CDN trực tiếp.
+Bản đồ Việt Nam chạy trực tiếp trên GitHub Pages, sử dụng **Vietflex 1.0.0** làm lõi bản đồ và **VNPT GoMaps** làm nền mặc định.
 
 ## CDN đang dùng
 
@@ -14,12 +14,12 @@ Commit SHA được pin cố định để tránh thay đổi ngoài dự kiến
 
 ## Kiến trúc
 
-- `Vietflex.vietflexMap(...)` khởi tạo bản đồ.
+- `Vietflex.vietflexMap(...)` khởi tạo bản đồ với `googleMaps: false`.
 - `Vietflex.ZoomControl` và `Vietflex.AttributionControl` thay control Leaflet trực tiếp.
-- Standard / Light / Dark / Dev Light dùng lớp `Vietflex.legacyGoogleTiles({ mapType: 'roadmap' })`.
-- Satellite dùng `Vietflex.legacyGoogleTiles({ mapType: 'satellite' })`.
-- Raster dùng `Vietflex.TileLayer` với tile VNPT GoMaps đã cấu hình.
-- Nền dự phòng dùng `Vietflex.TileLayer` với OpenStreetMap khi raster chính lỗi nhiều lần.
+- Attribution giao diện hiển thị **Vietflex | VNPT GoMaps**, không hiển thị liên kết Leaflet.
+- Standard / Light / Dark / Raster / Dev Light đều dùng `Vietflex.TileLayer` với nền VNPT GoMaps; Light/Dark/Dev Light chỉ thay đổi CSS filter.
+- Satellite là lớp tùy chọn riêng dùng `Vietflex.legacyGoogleTiles({ mapType: 'satellite' })`.
+- Nền dự phòng dùng `Vietflex.TileLayer` với OpenStreetMap nếu VNPT lỗi nhiều lần.
 - Không sử dụng MapLibre vector/PBF nên tránh nhóm lỗi `.vector.pbf` trước đây.
 - Giao diện icon-only cho Standard, Light, Dark, Raster, Satellite, Dev Light, Việt Nam và Cấu hình.
 - Tìm kiếm địa điểm tại Việt Nam và URL camera dạng `#zoom/lat/lon`.
