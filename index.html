@@ -36,14 +36,12 @@
     .search-results{position:absolute;left:0;right:0;top:50px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);max-height:300px;overflow:auto;display:none}
     .result{padding:9px 11px;border-bottom:1px solid #edf2f7;cursor:pointer;font-size:12px;line-height:1.35}.result:last-child{border-bottom:0}.result:hover{background:#f5f9fd}.result small{display:block;color:#7890a3;margin-top:2px}
 
-    .drawer{position:absolute;z-index:1100;top:68px;right:14px;width:min(360px,calc(100vw - 28px));background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;display:none;backdrop-filter:blur(12px)}
-    .drawer.open{display:block}.drawer h2{font-size:13px;margin:0 0 10px}.drawer p{font-size:11px;color:var(--muted);line-height:1.5;margin:7px 0}.drawer label{display:block;font-size:10px;color:#587289;margin:10px 0 4px}.drawer input{width:100%;height:36px;border:1px solid #c9d8e5;border-radius:8px;padding:0 9px;color:var(--ink);background:#fff;outline:none}.drawer .row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.drawer button{height:36px;border-radius:8px;border:1px solid #c8d8e5;background:#fff;color:#34566f;cursor:pointer}.drawer button.primary{background:var(--blue2);border-color:var(--blue2);color:#fff}
-
     .coords{position:absolute;z-index:900;left:14px;bottom:14px;background:rgba(255,255,255,.92);border:1px solid var(--line);box-shadow:0 5px 18px rgba(20,48,72,.1);border-radius:8px;padding:6px 9px;color:#567287;font-size:10.5px;pointer-events:none}
     .toast{position:absolute;z-index:1200;right:14px;bottom:14px;background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:9px;padding:8px 10px;font-size:11px;color:#48677e;opacity:0;transform:translateY(7px);pointer-events:none;transition:.2s;max-width:min(360px,70vw)}
     .toast.show{opacity:1;transform:none}.toast.bad{color:var(--bad)}.toast.ok{color:var(--ok)}
 
     .leaflet-control-zoom{border:none!important;box-shadow:var(--shadow)!important}.leaflet-control-zoom a{border:1px solid var(--line)!important;color:#34566f!important}.leaflet-control-attribution{font-size:9px!important;background:rgba(255,255,255,.82)!important}
+    .leaflet-top.leaflet-right{top:58px;right:14px}
 
     /* Tile visual modes for raster basemap variants. */
     .mode-standard .leaflet-tile-pane img{filter:none}
@@ -54,9 +52,9 @@
     .mode-satellite .leaflet-tile-pane img{filter:none}
 
     @media(max-width:900px){
-      .search{top:68px;width:calc(100vw - 28px);min-width:0}.toolbar{left:14px;right:14px;justify-content:flex-end}.tool-btn{width:39px;height:39px}.drawer{top:118px}.coords{bottom:12px}.leaflet-top.leaflet-left{top:110px}
+      .search{top:68px;width:calc(100vw - 28px);min-width:0}.toolbar{left:14px;right:14px;justify-content:flex-end}.tool-btn{width:39px;height:39px}.coords{bottom:12px}.leaflet-top.leaflet-right{top:106px;right:14px}
     }
-    @media(max-width:520px){.tool-btn{width:37px;height:37px;border-radius:10px}.toolbar{gap:5px}.search{top:62px;height:42px}.drawer{top:112px}}
+    @media(max-width:520px){.tool-btn{width:37px;height:37px;border-radius:10px}.toolbar{gap:5px}.search{top:62px;height:42px}.leaflet-top.leaflet-right{top:102px;right:10px}}
   </style>
 </head>
 <body class="mode-standard">
@@ -84,29 +82,12 @@
   <button class="tool-btn" id="btnVN" data-tip="Việt Nam" aria-label="Việt Nam">
     <svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2h5.5l-4.5 3.2 1.7 5.3-4.5-3.3-4.5 3.3 1.7-5.3-4.5-3.2h5.5z"/></svg>
   </button>
-  <button class="tool-btn" id="btnSettings" data-tip="Cấu hình" aria-label="Cấu hình">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.15.37.38.7.68.96.3.26.67.4 1.07.44H21v4h-.1a1.7 1.7 0 0 0-1.5.6z"/></svg>
-  </button>
 </div>
 
 <div class="search">
   <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
   <input id="searchInput" type="search" autocomplete="off" placeholder="Tìm địa điểm tại Việt Nam…">
   <div id="searchResults" class="search-results"></div>
-</div>
-
-<div id="drawer" class="drawer">
-  <h2>Cấu hình bản đồ</h2>
-  <p>Lõi bản đồ dùng Vietflex CDN cố định theo commit. VNPT GoMaps là nền gốc cho Standard, Light, Dark, Raster và Dev Light; Satellite là lớp tùy chọn riêng.</p>
-  <label>Máy chủ tile</label>
-  <input id="tileBase" value="https://gomaps.vnpt.vn/tiles/mapvnpt/v1/{z}/{x}/{y}.png" spellcheck="false">
-  <label>API key</label>
-  <input id="apiKey" type="password" autocomplete="off" placeholder="API key">
-  <div class="row">
-    <button id="saveConfig" class="primary">Áp dụng</button>
-    <button id="resetConfig">Khôi phục</button>
-  </div>
-  <p>API key client xuất hiện trong request trình duyệt. Khi public, nên giới hạn origin/quota tại nhà cung cấp dịch vụ.</p>
 </div>
 
 <div id="coords" class="coords">Lon: -- | Lat: --</div>
@@ -118,7 +99,6 @@
 
   const DEFAULT_TILE = 'https://gomaps.vnpt.vn/tiles/mapvnpt/v1/{z}/{x}/{y}.png';
   const DEFAULT_KEY = 'e278c7b3-b64f-4487-831a-1896ea41a270';
-  const STORE_KEY = 'vnmap-config-v2';
   const VIETNAM_BOUNDS = [[7.0,101.5],[24.0,116.8]];
 
   const $ = id => document.getElementById(id);
@@ -132,19 +112,8 @@
     toastTimer = setTimeout(() => toast.className = 'toast', 2600);
   }
 
-  function loadConfig(){
-    try{
-      const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-      return {
-        tile: saved?.tile || DEFAULT_TILE,
-        key: saved?.key || DEFAULT_KEY
-      };
-    }catch(_){ return {tile:DEFAULT_TILE,key:DEFAULT_KEY}; }
-  }
-
-  let config = loadConfig();
-  $('tileBase').value = config.tile;
-  $('apiKey').value = config.key;
+  // Cấu hình nền VNPT GoMaps cố định trong mã nguồn.
+  const config = {tile: DEFAULT_TILE, key: DEFAULT_KEY};
 
   if(!window.Vietflex){
     notify('Không tải được thư viện Vietflex. Vui lòng kiểm tra kết nối Internet.','bad');
@@ -162,7 +131,7 @@
     preferCanvas:true
   });
 
-  new Vietflex.ZoomControl({position:'topleft'}).addTo(map);
+  new Vietflex.ZoomControl({position:'topright'}).addTo(map);
   new Vietflex.AttributionControl({
     position:'bottomright',
     prefix:'<a href="https://github.com/Vietflexmap/VN" target="_blank" rel="noopener" title="Vietflex">Vietflex</a>'
@@ -249,25 +218,6 @@
   document.querySelectorAll('[data-mode]').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
   $('btnVN').addEventListener('click', () => map.fitBounds(VIETNAM_BOUNDS, {padding:[35,35],maxZoom:6}));
-  $('btnSettings').addEventListener('click', () => $('drawer').classList.toggle('open'));
-
-  $('saveConfig').addEventListener('click', () => {
-    const tile = $('tileBase').value.trim() || DEFAULT_TILE;
-    const key = $('apiKey').value.trim() || DEFAULT_KEY;
-    config = {tile,key};
-    localStorage.setItem(STORE_KEY, JSON.stringify(config));
-    setMode(currentMode);
-    notify('Đã cập nhật cấu hình.','ok');
-  });
-
-  $('resetConfig').addEventListener('click', () => {
-    localStorage.removeItem(STORE_KEY);
-    config = {tile:DEFAULT_TILE,key:DEFAULT_KEY};
-    $('tileBase').value = config.tile;
-    $('apiKey').value = config.key;
-    setMode('standard');
-    notify('Đã khôi phục cấu hình mặc định.','ok');
-  });
 
   map.on('pointermove', e => {
     $('coords').textContent = `Lon: ${e.latlng.lng.toFixed(6)} | Lat: ${e.latlng.lat.toFixed(6)}`;
@@ -318,7 +268,7 @@
   $('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') search(e.currentTarget.value); });
   let searchTimer=null;
   $('searchInput').addEventListener('input', e => { clearTimeout(searchTimer); searchTimer=setTimeout(()=>search(e.target.value),450); });
-  document.addEventListener('click', e => { if(!e.target.closest('.search')) results.style.display='none'; if(!e.target.closest('.drawer')&&!e.target.closest('#btnSettings')) $('drawer').classList.remove('open'); });
+  document.addEventListener('click', e => { if(!e.target.closest('.search')) results.style.display='none'; });
 
   restoreHash();
   setMode('standard');
