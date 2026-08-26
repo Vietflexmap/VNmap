@@ -45,6 +45,7 @@
 
     .leaflet-control-zoom{border:none!important;box-shadow:var(--shadow)!important}.leaflet-control-zoom a{border:1px solid var(--line)!important;color:#34566f!important}.leaflet-control-attribution{font-size:9px!important;background:rgba(255,255,255,.82)!important}
 
+    /* Tile visual modes for raster basemap variants. */
     .mode-standard .leaflet-tile-pane img{filter:none}
     .mode-light .leaflet-tile-pane img{filter:brightness(1.12) saturate(.72) contrast(.92)}
     .mode-dark .leaflet-tile-pane img{filter:brightness(.58) saturate(.75) contrast(1.14) hue-rotate(8deg)}
@@ -96,7 +97,7 @@
 
 <div id="drawer" class="drawer">
   <h2>Cấu hình bản đồ</h2>
-  <p>Lõi bản đồ dùng Vietflex CDN cố định theo commit. Standard/Light/Dark dùng Vietflex roadmap; Raster dùng tile cấu hình bên dưới.</p>
+  <p>Lõi bản đồ dùng Vietflex CDN cố định theo commit. VNPT GoMaps là nền gốc cho Standard, Light, Dark, Raster và Dev Light; Satellite là lớp tùy chọn riêng.</p>
   <label>Máy chủ tile</label>
   <input id="tileBase" value="https://gomaps.vnpt.vn/tiles/mapvnpt/v1/{z}/{x}/{y}.png" spellcheck="false">
   <label>API key</label>
@@ -157,15 +158,17 @@
     maxZoom:22,
     zoomControl:false,
     attributionControl:false,
-    useLegacyGoogleTiles:true,
-    googleMapType:'roadmap',
+    googleMaps:false,
     preferCanvas:true
   });
 
   new Vietflex.ZoomControl({position:'topleft'}).addTo(map);
-  new Vietflex.AttributionControl({position:'bottomright'}).addTo(map);
+  new Vietflex.AttributionControl({
+    position:'bottomright',
+    prefix:'<a href="https://github.com/Vietflexmap/VN" target="_blank" rel="noopener" title="Vietflex">Vietflex</a>'
+  }).addTo(map);
 
-  let standardLayer = map.baseLayer || Vietflex.legacyGoogleTiles({mapType:'roadmap'});
+  let standardLayer = null;
   let vnptLayer = null;
   let satelliteLayer = null;
   let fallbackLayer = null;
@@ -181,7 +184,7 @@
   function makeVnptLayer(){
     return new Vietflex.TileLayer(vnptUrl(), {
       minZoom:0,maxZoom:20,maxNativeZoom:20,
-      attribution:'',
+      attribution:'VNPT GoMaps',
       className:'vnpt-tiles',
       updateWhenIdle:false,keepBuffer:4
     });
@@ -203,7 +206,7 @@
   }
 
   function removeBaseLayers(){
-    [standardLayer,vnptLayer,satelliteLayer,fallbackLayer].forEach(layer => {
+    [vnptLayer,satelliteLayer,fallbackLayer].forEach(layer => {
       if(layer && map.hasLayer(layer)) map.removeLayer(layer);
     });
   }
@@ -236,15 +239,11 @@
       return;
     }
 
-    if(mode === 'raster'){
-      vnptLayer = makeVnptLayer();
-      attachTileHealth(vnptLayer);
-      vnptLayer.addTo(map);
-      return;
-    }
-
-    standardLayer = standardLayer || Vietflex.legacyGoogleTiles({mapType:'roadmap'});
-    standardLayer.addTo(map);
+    // VNPT GoMaps là nền gốc cho Standard / Light / Dark / Raster / Dev Light.
+    // Light/Dark/Dev Light chỉ thay đổi CSS filter, không thay đổi nhà cung cấp dữ liệu.
+    vnptLayer = makeVnptLayer();
+    attachTileHealth(vnptLayer);
+    vnptLayer.addTo(map);
   }
 
   document.querySelectorAll('[data-mode]').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
@@ -274,6 +273,7 @@
     $('coords').textContent = `Lon: ${e.latlng.lng.toFixed(6)} | Lat: ${e.latlng.lat.toFixed(6)}`;
   });
 
+  // Compact URL state: #zoom/lat/lon
   let hashTimer = null;
   map.on('moveend zoomend', () => {
     clearTimeout(hashTimer);
@@ -288,6 +288,7 @@
     if(m) map.setView([Number(m[2]),Number(m[3])],Number(m[1]));
   }
 
+  // Search via Nominatim; errors are silent and user-friendly.
   const results = $('searchResults');
   let searchAbort = null;
   async function search(q){
