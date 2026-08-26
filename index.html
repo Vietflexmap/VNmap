@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#0b3c5d">
   <meta name="description" content="Bản đồ Việt Nam trực tuyến">
-  <title>VNmap</title>
+  <title>Vietflex map</title>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/Vietflexmap/VN@6144d565fcf236727577ab3c4471bbe49f86892f/dist/vietflex.css">
+  <script src="https://cdn.jsdelivr.net/gh/Vietflexmap/VN@6144d565fcf236727577ab3c4471bbe49f86892f/dist/vietflex.js"></script>
 
   <style>
     :root{
@@ -44,11 +45,12 @@
 
     .leaflet-control-zoom{border:none!important;box-shadow:var(--shadow)!important}.leaflet-control-zoom a{border:1px solid var(--line)!important;color:#34566f!important}.leaflet-control-attribution{font-size:9px!important;background:rgba(255,255,255,.82)!important}
 
-    .mode-standard .vnpt-tiles{filter:none}
-    .mode-light .vnpt-tiles{filter:brightness(1.12) saturate(.72) contrast(.92)}
-    .mode-dark .vnpt-tiles{filter:brightness(.58) saturate(.75) contrast(1.14) hue-rotate(8deg)}
-    .mode-devlight .vnpt-tiles{filter:grayscale(.28) brightness(1.16) contrast(.88) saturate(.58)}
-    .mode-raster .vnpt-tiles{filter:none}
+    .mode-standard .leaflet-tile-pane img{filter:none}
+    .mode-light .leaflet-tile-pane img{filter:brightness(1.12) saturate(.72) contrast(.92)}
+    .mode-dark .leaflet-tile-pane img{filter:brightness(.58) saturate(.75) contrast(1.14) hue-rotate(8deg)}
+    .mode-devlight .leaflet-tile-pane img{filter:grayscale(.28) brightness(1.16) contrast(.88) saturate(.58)}
+    .mode-raster .leaflet-tile-pane img{filter:none}
+    .mode-satellite .leaflet-tile-pane img{filter:none}
 
     @media(max-width:900px){
       .search{top:68px;width:calc(100vw - 28px);min-width:0}.toolbar{left:14px;right:14px;justify-content:flex-end}.tool-btn{width:39px;height:39px}.drawer{top:118px}.coords{bottom:12px}.leaflet-top.leaflet-left{top:110px}
@@ -94,7 +96,7 @@
 
 <div id="drawer" class="drawer">
   <h2>Cấu hình bản đồ</h2>
-  <p>Trang ưu tiên nền raster để hoạt động ổn định trên GitHub Pages.</p>
+  <p>Lõi bản đồ dùng Vietflex CDN cố định theo commit. Standard/Light/Dark dùng Vietflex roadmap; Raster dùng tile cấu hình bên dưới.</p>
   <label>Máy chủ tile</label>
   <input id="tileBase" value="https://gomaps.vnpt.vn/tiles/mapvnpt/v1/{z}/{x}/{y}.png" spellcheck="false">
   <label>API key</label>
@@ -143,11 +145,27 @@
   $('tileBase').value = config.tile;
   $('apiKey').value = config.key;
 
-  const map = L.map('map', {
-    center:[15.42,106.42], zoom:5, minZoom:3, maxZoom:19,
-    zoomControl:true, preferCanvas:true
+  if(!window.Vietflex){
+    notify('Không tải được thư viện Vietflex. Vui lòng kiểm tra kết nối Internet.','bad');
+    return;
+  }
+
+  const map = Vietflex.vietflexMap('map', {
+    center:[15.42,106.42],
+    zoom:5,
+    minZoom:3,
+    maxZoom:22,
+    zoomControl:false,
+    attributionControl:false,
+    useLegacyGoogleTiles:true,
+    googleMapType:'roadmap',
+    preferCanvas:true
   });
 
+  new Vietflex.ZoomControl({position:'topleft'}).addTo(map);
+  new Vietflex.AttributionControl({position:'bottomright'}).addTo(map);
+
+  let standardLayer = map.baseLayer || Vietflex.legacyGoogleTiles({mapType:'roadmap'});
   let vnptLayer = null;
   let satelliteLayer = null;
   let fallbackLayer = null;
@@ -161,7 +179,7 @@
   }
 
   function makeVnptLayer(){
-    return L.tileLayer(vnptUrl(), {
+    return new Vietflex.TileLayer(vnptUrl(), {
       minZoom:0,maxZoom:20,maxNativeZoom:20,
       attribution:'',
       className:'vnpt-tiles',
@@ -170,7 +188,7 @@
   }
 
   function makeFallback(){
-    return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    return new Vietflex.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom:19,
       attribution:'&copy; OpenStreetMap contributors',
       className:'fallback-tiles'
@@ -178,14 +196,14 @@
   }
 
   function makeSatellite(){
-    return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom:19,
-      attribution:'Tiles &copy; Esri'
+    return Vietflex.legacyGoogleTiles({
+      mapType:'satellite',
+      maxZoom:22
     });
   }
 
   function removeBaseLayers(){
-    [vnptLayer,satelliteLayer,fallbackLayer].forEach(layer => {
+    [standardLayer,vnptLayer,satelliteLayer,fallbackLayer].forEach(layer => {
       if(layer && map.hasLayer(layer)) map.removeLayer(layer);
     });
   }
@@ -218,9 +236,15 @@
       return;
     }
 
-    vnptLayer = makeVnptLayer();
-    attachTileHealth(vnptLayer);
-    vnptLayer.addTo(map);
+    if(mode === 'raster'){
+      vnptLayer = makeVnptLayer();
+      attachTileHealth(vnptLayer);
+      vnptLayer.addTo(map);
+      return;
+    }
+
+    standardLayer = standardLayer || Vietflex.legacyGoogleTiles({mapType:'roadmap'});
+    standardLayer.addTo(map);
   }
 
   document.querySelectorAll('[data-mode]').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
@@ -246,7 +270,7 @@
     notify('Đã khôi phục cấu hình mặc định.','ok');
   });
 
-  map.on('mousemove', e => {
+  map.on('pointermove', e => {
     $('coords').textContent = `Lon: ${e.latlng.lng.toFixed(6)} | Lat: ${e.latlng.lat.toFixed(6)}`;
   });
 
